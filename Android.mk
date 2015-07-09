@@ -13,6 +13,7 @@ LOCAL_STATIC_JAVA_LIBRARIES :=  \
 	IngenicGlassSDK\
 
 LOCAL_JNI_SHARED_LIBRARIES := libSmartGlassesLedTest
+LOCAL_REQUIRED_MODULES := libSmartGlassesLedTest
 
 LOCAL_RESOURCE_DIR = \
     $(LOCAL_PATH)/res \
@@ -31,8 +32,8 @@ include $(BUILD_PACKAGE)
 
 include $(CLEAR_VARS)
 LOCAL_PREBUILT_STATIC_JAVA_LIBRARIES += IngenicGlassSDK:libs/IngenicGlassSDK.jar
-LOCAL_PREBUILT_LIBS := libSmartGlassesLedTest:libs/armeabi/libSmartGlassesLedTest.so
 LOCAL_CERTIFICATE := platform  
 include $(BUILD_MULTI_PREBUILT)  
 
 # This finds and builds the test apk as well, so a single make does both.
+include $(call all-makefiles-under,$(LOCAL_PATH))
