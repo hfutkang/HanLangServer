@@ -1,0 +1,26 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.smartglass.device.MainActivity" >
+
+    <Button
+        android:id="@+id/take_picture_bt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="100dp"
+        android:text="@string/take_photo" 
+        android:onClick="onTakePictureButtonClicked"/>
+    
+    <Button 
+        android:id="@+id/take_vedio_bt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/take_picture_bt"
+        android:layout_marginTop="10dp"
+        android:text="@string/take_vedio" 
+        android:onClick="onTakeVedioButtonClicked"/>
+    
+</RelativeLayout>
