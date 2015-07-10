@@ -23,7 +23,7 @@ LOCAL_AAPT_FLAGS := \
 	--auto-add-overlay \
 	--extra-packages android.support.v7.appcompat
 
-LOCAL_PACKAGE_NAME := SmartGlasses_Server
+LOCAL_PACKAGE_NAME := HanLangServer
 
 # Builds against the public SDK
 #LOCAL_SDK_VERSION := current
