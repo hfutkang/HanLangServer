@@ -49,7 +49,7 @@ public class GlassesService extends Service {
 	private ConnectivityManager mConnectivityManager;
 	
 	private SyncChannel mNotifyChannel;
-	private GlassNotifyBroadcastReceiver mGlassNotifyBroadcastReceiver;
+	private GlassReceiver mGlassNotifyBroadcastReceiver;
 	
 	private static final String[] lables = { "pixel", 
 		"pixel", 
@@ -87,8 +87,13 @@ public class GlassesService extends Service {
 		
 		IntentFilter filter = new IntentFilter();
 		filter.addAction(Intent.ACTION_BATTERY_LOW);
-		filter.addAction("ACTION_LOW_STORAGE");
-		mGlassNotifyBroadcastReceiver = new GlassNotifyBroadcastReceiver(this, mNotifyChannel);
+		filter.addAction(Intent.ACTION_BATTERY_CHANGED);
+		filter.addAction("cn.ingenic.glass.ACTION_MEDIA_VIDEO_START");
+		filter.addAction("cn.ingenic.glass.ACTION_MEDIA_VIDEO_FINISH");
+		filter.addAction(Intent.ACTION_BOOT_COMPLETED);
+		filter.addAction(Intent.ACTION_POWER_CONNECTED);
+		filter.addAction(Intent.ACTION_POWER_DISCONNECTED);
+		mGlassNotifyBroadcastReceiver = new GlassReceiver(this, mNotifyChannel);
 		registerReceiver(mGlassNotifyBroadcastReceiver, filter);
 
 	}
