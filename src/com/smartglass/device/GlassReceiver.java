@@ -64,6 +64,7 @@ public class GlassReceiver extends BroadcastReceiver {
 			mLedOperation.TurnRedLightOn();
 
 		}else if(intent.getAction().endsWith(Intent.ACTION_POWER_DISCONNECTED)) {
+			mLedOperation.TurnRedLightOff();
 			mLedOperation.TurnGreenLightOff();
 
 		}
