@@ -41,6 +41,10 @@ public class GlassesService extends Service {
 	public final static int SWITCH_ROUND_VIDEO = 12;
 	public final static int GET_POWER_LEVEL = 13;
 	public final static int GET_STORAGE_STATE = 14;
+	public final static int WIFI_CONNECTED = 15;
+	
+	private static final String CMD_CHANNEL_NAME = "cmdchannel";
+	private static final String NTF_CHANNEL_NAME = "ntfchannel";
 	
 	private WifiAdmin mWifiAdmin;
 	private SyncChannel mCmdChannel;
@@ -77,8 +81,8 @@ public class GlassesService extends Service {
 		super.onCreate();
 		
 		mWifiAdmin = new WifiAdmin(this);
-		mCmdChannel = SyncChannel.create("00e04c68229b0", this, mOnCmdChannelListener);
-		mNotifyChannel = SyncChannel.create("00e04c68229b1", this, mOnNotifyChannelListener);
+		mCmdChannel = SyncChannel.create(CMD_CHANNEL_NAME, this, mOnCmdChannelListener);
+		mNotifyChannel = SyncChannel.create(NTF_CHANNEL_NAME, this, mOnNotifyChannelListener);
 		
 		mPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 		mAudioManager = (AudioManager)getSystemService(AUDIO_SERVICE);
@@ -146,6 +150,7 @@ public class GlassesService extends Service {
 					Log.e(TAG, "ssid:" + ssid + " pw:" + pw);
 					if(isWifiConnected(ssid)) {
 						String ip = Utils.getLocalIpAddress();
+						pk.putInt("type", WIFI_CONNECTED);
 						pk.putString("ip", "" + ip);
 					}
 					else {
@@ -272,6 +277,7 @@ public class GlassesService extends Service {
 					try {
 						String ip = Utils.getLocalIpAddress();
 						Packet pk = mCmdChannel.createPacket();
+						pk.putInt("type", WIFI_CONNECTED);
 						pk.putString("ip", ip);
 						mCmdChannel.sendPacket(pk);
 						Log.e(TAG, Utils.getLocalIpAddress());
