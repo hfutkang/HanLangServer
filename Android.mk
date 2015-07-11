@@ -10,7 +10,8 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_STATIC_JAVA_LIBRARIES :=  \
 	android-support-v7-appcompat \
 	android-support-v4 \
-	IngenicGlassSDK\
+	IngenicGlassSDK \
+	VoiceRecognizerAPI
 
 LOCAL_JNI_SHARED_LIBRARIES := libSmartGlassesLedTest
 LOCAL_REQUIRED_MODULES := libSmartGlassesLedTest

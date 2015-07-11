@@ -8,4 +8,7 @@
     <string name="take_photo">拍照</string>
     <string name="take_vedio">录像</string>
 
+    <!-- tts -->
+    <string name="tts_low_battery">The battery is getting low, please connect charger.</string>
+
 </resources>

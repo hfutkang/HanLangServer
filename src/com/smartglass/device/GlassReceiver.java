@@ -3,6 +3,7 @@ package com.smartglass.device;
 import com.ingenic.glass.api.sync.SyncChannel;
 import com.ingenic.glass.api.sync.SyncChannel.Packet;
 import com.smartglass.smartglassesledtest.LedOperation;
+import com.ingenic.glass.voicerecognizer.api.VoiceRecognizer;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -19,6 +20,8 @@ public class GlassReceiver extends BroadcastReceiver {
 	private Context mContext;
 	private LedOperation mLedOperation;
 	
+	private VoiceRecognizer mVoiceRecognizer = null;
+
 	private final static int MSG_TYPE_LOW_POWER = 2;
 	private static final int MSG_CLOSE_RED_LIGHT = 1;
 	
@@ -28,7 +31,10 @@ public class GlassReceiver extends BroadcastReceiver {
 		mChannel = channle;
 		mContext = context;
 		mLedOperation = new LedOperation();
+		mVoiceRecognizer = new VoiceRecognizer(VoiceRecognizer.REC_TYPE_COMMAND, null);
+		mVoiceRecognizer.setAppName("GlassReceiver");
 	}
+
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		// TODO Auto-generated method stub
@@ -39,6 +45,7 @@ public class GlassReceiver extends BroadcastReceiver {
 			mLedOperation.SetRedBlinkRate(2);
 			mLedOperation.TurnRedLightBlinkOn();
 			sendLowPowerMsg();
+			mVoiceRecognizer.playTTS(mContext.getString(R.string.tts_low_battery));
 		}
 		else if(intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)) {
 			int status = intent.getIntExtra("status",BatteryManager.BATTERY_STATUS_UNKNOWN);

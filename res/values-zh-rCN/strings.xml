@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+   <!-- tts -->
+   <string name="tts_low_battery">电量不足，请及时充电。</string>
+</resources>
