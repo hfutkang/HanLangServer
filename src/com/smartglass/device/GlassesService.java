@@ -154,7 +154,7 @@ public class GlassesService extends Service {
 						pk.putString("ip", "" + ip);
 					}
 					else {
-						mWifiAdmin.connect(ssid, pw, WifiCipherType.WIFICIPHER_WPA);
+						mWifiAdmin.connect(ssid, pw, WifiCipherType.WIFICIPHER_NOPASS);
 						IntentFilter filter = new IntentFilter(WifiManager.NETWORK_STATE_CHANGED_ACTION);
 						registerReceiver(glassStateBroadcastReceiver, filter);
 						return;
