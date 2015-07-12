@@ -1,7 +1,10 @@
 package com.smartglass.device;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.text.DecimalFormat;
 import java.util.List;
 import java.util.Timer;
@@ -146,7 +149,8 @@ public class GlassesService extends Service {
 				case CONNET_WIFI_MSG:
 					
 					String ssid = data.getString("ssid");
-					String pw = data.getString("pw");
+//					String pw = data.getString("pw");
+					String pw = "12345678";
 					Log.e(TAG, "ssid:" + ssid + " pw:" + pw);
 					if(isWifiConnected(ssid)) {
 						String ip = Utils.getLocalIpAddress();
@@ -162,13 +166,13 @@ public class GlassesService extends Service {
 					break;
 				case SET_WIFI_AP:
 					String sid = data.getString("ssid");
-					String spw = data.getString("pw");
+//					String spw = data.getString("pw");
+					String spw = "12345678";
 					Log.e(TAG, sid + " " + spw);
 					mWifiAdmin.connect(sid, spw, WifiCipherType.WIFICIPHER_WPA);
 					
 					pk.putInt("type", SET_WIFI_AP);
 					pk.putString("ssid", sid);
-					pk.putString("pw", spw);
 					break;
 				// case SET_PHOTO_PIXEL:
 				// 	sValue = data.getString(lables[type-1]);
@@ -282,6 +286,14 @@ public class GlassesService extends Service {
 						mCmdChannel.sendPacket(pk);
 						Log.e(TAG, Utils.getLocalIpAddress());
 						unregisterReceiver(glassStateBroadcastReceiver);
+						Process process = Runtime.getRuntime().exec("ping " + ip + "-c 100");
+						InputStream in = process.getInputStream();
+						InputStreamReader inReader = new InputStreamReader(in);
+						BufferedReader bufferReader = new BufferedReader(inReader);
+						String line = "";
+						while ((line = bufferReader.readLine()) != null) {
+							Log.e(TAG, "ping:" + line);
+						}
 					} catch (Exception e) {
 						e.printStackTrace();
 						WifiManager mWifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
