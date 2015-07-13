@@ -42,7 +42,7 @@ public class GlassReceiver extends BroadcastReceiver {
 		if(GlassApplication.DEBUG) Log.d(TAG, "----action:"+intent.getAction());
 		if(Intent.ACTION_BATTERY_LOW.equals(action)) {
 			Log.e(TAG, "Low Power");
-			mLedOperation.SetRedBlinkRate(2);
+			mLedOperation.SetRedBlinkRate(0.3f);
 			mLedOperation.TurnRedLightBlinkOn();
 			sendLowPowerMsg();
 			mVoiceRecognizer.playTTS(mContext.getString(R.string.tts_low_battery));
