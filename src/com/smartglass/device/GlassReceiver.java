@@ -19,7 +19,7 @@ public class GlassReceiver extends BroadcastReceiver {
 	private SyncChannel mChannel;
 	private Context mContext;
 	private LedOperation mLedOperation;
-	
+	private boolean mPowerConnected = false;
 	private VoiceRecognizer mVoiceRecognizer = null;
 
 	private final static int MSG_TYPE_LOW_POWER = 2;
@@ -49,7 +49,7 @@ public class GlassReceiver extends BroadcastReceiver {
 		}
 		else if(intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)) {
 			int status = intent.getIntExtra("status",BatteryManager.BATTERY_STATUS_UNKNOWN);
-			if (status == BatteryManager.BATTERY_STATUS_FULL) {
+			if (status == BatteryManager.BATTERY_STATUS_FULL && mPowerConnected) {
 				mLedOperation.TurnRedLightOff();
 				mLedOperation.TurnGreenLightOn();
 			}
@@ -69,11 +69,12 @@ public class GlassReceiver extends BroadcastReceiver {
 	        }else if(intent.getAction().endsWith(Intent.ACTION_POWER_CONNECTED)) {
 			mLedOperation.TurnRedLightBlinkOff();
 			mLedOperation.TurnRedLightOn();
+			mPowerConnected = true;
 
 		}else if(intent.getAction().endsWith(Intent.ACTION_POWER_DISCONNECTED)) {
 			mLedOperation.TurnRedLightOff();
 			mLedOperation.TurnGreenLightOff();
-
+			mPowerConnected = false;
 		}
 		
 	}
