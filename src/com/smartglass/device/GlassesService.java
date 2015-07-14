@@ -286,7 +286,7 @@ public class GlassesService extends Service {
 						mCmdChannel.sendPacket(pk);
 						Log.e(TAG, Utils.getLocalIpAddress());
 						unregisterReceiver(glassStateBroadcastReceiver);
-						Process process = Runtime.getRuntime().exec("ping -c 100 192.168.43.1");
+						Process process = Runtime.getRuntime().exec("ping -c 1 192.168.43.1");
 						InputStream in = process.getInputStream();
 						InputStreamReader inReader = new InputStreamReader(in);
 						BufferedReader bufferReader = new BufferedReader(inReader);
