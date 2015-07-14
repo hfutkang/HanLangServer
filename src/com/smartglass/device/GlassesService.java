@@ -175,7 +175,7 @@ public class GlassesService extends Service {
 //					String spw = data.getString("pw");
 					String spw = "12345678";
 					Log.e(TAG, sid + " " + spw);
-					mWifiAdmin.connect(sid, spw, WifiCipherType.WIFICIPHER_WPA);
+					mWifiAdmin.connect(sid, spw, WifiCipherType.WIFICIPHER_NOPASS);
 					
 					pk.putInt("type", SET_WIFI_AP);
 					pk.putString("ssid", sid);
