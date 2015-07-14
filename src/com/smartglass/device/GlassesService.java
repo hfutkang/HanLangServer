@@ -2,7 +2,9 @@ package com.smartglass.device;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.text.DecimalFormat;
@@ -28,7 +30,9 @@ import android.media.AudioManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.IBinder;
+import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -45,6 +49,8 @@ public class GlassesService extends Service {
 	public final static int GET_POWER_LEVEL = 13;
 	public final static int GET_STORAGE_STATE = 14;
 	public final static int WIFI_CONNECTED = 15;
+	public final static int GET_UP_TIME = 16;
+	public final static int GET_GLASS_INFO = 17;
 	
 	private static final String CMD_CHANNEL_NAME = "cmdchannel";
 	private static final String NTF_CHANNEL_NAME = "ntfchannel";
@@ -219,7 +225,17 @@ public class GlassesService extends Service {
 					pk.putString("available", availableSize);
 					pk.putString("total", totalString);
 					pk.putInt("type", GET_STORAGE_STATE);
-					mCmdChannel.sendPacket(pk);
+					break;
+				case GET_UP_TIME:
+					pk.putLong("uptime", SystemClock.elapsedRealtime());
+					pk.putInt("type", GET_UP_TIME);
+					break;
+				case GET_GLASS_INFO:
+					pk.putString("model", Build.MODEL);
+					pk.putString("cpu", getCpuInfo());
+					pk.putString("version", Build.VERSION.RELEASE);
+					pk.putString("serial", getSerialNumber());
+					pk.putInt("type", GET_GLASS_INFO);
 					break;
 				default:
 					return;
@@ -249,6 +265,35 @@ public class GlassesService extends Service {
 		}
 	};
 
+	private String getCpuInfo() {
+		try {
+			FileReader freader = new FileReader("/proc/cpuinfo");
+			BufferedReader breader = new BufferedReader(freader);
+			String line = null;
+			while((line = breader.readLine()) != null) {
+				if(line.startsWith("cpu model")) {
+					String[] cpuInfo = line.split(": ");
+					return cpuInfo[1];
+				}
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return "";
+	}
+	
+	private String getSerialNumber() {
+		String serial = null;
+		try {
+			FileReader freader = new FileReader("/sys/class/android_usb/android0/iSerial");
+			BufferedReader breader = new BufferedReader(freader);
+			serial = breader.readLine();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return serial + "";
+	}
 	private boolean isWifiConnected(String ssid) {
 		
 		NetworkInfo netinfo = mConnectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
