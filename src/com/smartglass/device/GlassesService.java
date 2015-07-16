@@ -196,6 +196,8 @@ public class GlassesService extends Service {
 					i.putExtra("value",sValue);
 					i.setPackage("com.ingenic.glass.camera");
 					sendBroadcast(i);
+					
+					setVideoDuration(sValue);
 					break;
 				case SWITCH_ROUND_VIDEO:
 					bvalue = data.getBoolean(lables[type-1]);
@@ -206,6 +208,8 @@ public class GlassesService extends Service {
 					in.putExtra("value",bvalue);
 					in.setPackage("com.ingenic.glass.camera");
 					sendBroadcast(in);
+					
+					setVideoRound(bvalue);
 					break;
 				case SET_VOLUME:
 					int volume = data.getInt(lables[type-1]);
@@ -235,6 +239,9 @@ public class GlassesService extends Service {
 					pk.putString("cpu", getCpuInfo());
 					pk.putString("version", Build.VERSION.RELEASE);
 					pk.putString("serial", getSerialNumber());
+					pk.putInt("volume", getVolume());
+					pk.putString("duration", getVideoDuration());
+					pk.putBoolean("round", getVideoRound());
 					pk.putInt("type", GET_GLASS_INFO);
 					break;
 				default:
@@ -294,6 +301,34 @@ public class GlassesService extends Service {
 		}
 		return serial + "";
 	}
+	
+	private int getVolume() {
+		return mAudioManager.getStreamVolume(AudioManager.STREAM_SYSTEM);
+	}
+	
+	private void setVideoRound(boolean value) {
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+		Editor editor = preferences.edit();
+		editor.putBoolean("round", value);
+		editor.commit();
+	}
+	
+	private void setVideoDuration(String value) {
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+		Editor editor = preferences.edit();
+		editor.putString("duration", value);
+		editor.commit();
+	}
+	
+	private boolean getVideoRound() {
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+		return preferences.getBoolean("round", false);
+	}
+	
+	private String getVideoDuration() {
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+		return preferences.getString("duration", "10");
+	}
 	private boolean isWifiConnected(String ssid) {
 		
 		NetworkInfo netinfo = mConnectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
@@ -302,6 +337,7 @@ public class GlassesService extends Service {
 			return true;
 		return false;
 	}
+	
 	private BroadcastReceiver glassStateBroadcastReceiver = new BroadcastReceiver() {
 		
 		@Override
