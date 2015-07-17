@@ -20,6 +20,7 @@ public class GlassReceiver extends BroadcastReceiver {
 	private Context mContext;
 	private LedOperation mLedOperation;
 	private boolean mPowerConnected = false;
+	private boolean mVideoRecording = false;
 	private VoiceRecognizer mVoiceRecognizer = null;
 
 	private final static int MSG_TYPE_LOW_POWER = 2;
@@ -60,10 +61,12 @@ public class GlassReceiver extends BroadcastReceiver {
 			mHandler.sendEmptyMessageDelayed(MSG_CLOSE_RED_LIGHT, 5000);
 			
 		}else if(intent.getAction().equals("cn.ingenic.glass.ACTION_MEDIA_VIDEO_START")) {
+			mVideoRecording = true;
 			mLedOperation.SetGreenBlinkRate(1);
 			mLedOperation.TurnGreenLightBlinkOn();
 
 	        }else if(intent.getAction().equals("cn.ingenic.glass.ACTION_MEDIA_VIDEO_FINISH")) {
+			mVideoRecording = false;
 			mLedOperation.TurnGreenLightBlinkOff();
 
 	        }else if(intent.getAction().endsWith(Intent.ACTION_POWER_CONNECTED)) {
@@ -73,7 +76,10 @@ public class GlassReceiver extends BroadcastReceiver {
 
 		}else if(intent.getAction().endsWith(Intent.ACTION_POWER_DISCONNECTED)) {
 			mLedOperation.TurnRedLightOff();
-			mLedOperation.TurnGreenLightOff();
+
+			if(!mVideoRecording)
+				mLedOperation.TurnGreenLightOff();
+			
 			mPowerConnected = false;
 		}
 		
