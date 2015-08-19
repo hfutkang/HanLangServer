@@ -65,14 +65,14 @@ public class GlassReceiver extends BroadcastReceiver {
 			mLedOperation.SetGreenBlinkRate(1);
 			mLedOperation.TurnGreenLightBlinkOn();
 
-	        }else if(intent.getAction().equals("cn.ingenic.glass.ACTION_MEDIA_VIDEO_FINISH")) {
-			mVideoRecording = false;
-			mLedOperation.TurnGreenLightBlinkOff();
+    }else if(intent.getAction().equals("cn.ingenic.glass.ACTION_MEDIA_VIDEO_FINISH")) {
+		mVideoRecording = false;
+		mLedOperation.TurnGreenLightBlinkOff();
 
-	        }else if(intent.getAction().endsWith(Intent.ACTION_POWER_CONNECTED)) {
-			mLedOperation.TurnRedLightBlinkOff();
-			mLedOperation.TurnRedLightOn();
-			mPowerConnected = true;
+    }else if(intent.getAction().endsWith(Intent.ACTION_POWER_CONNECTED)) {
+		mLedOperation.TurnRedLightBlinkOff();
+		mLedOperation.TurnRedLightOn();
+		mPowerConnected = true;
 
 		}else if(intent.getAction().endsWith(Intent.ACTION_POWER_DISCONNECTED)) {
 			mLedOperation.TurnRedLightOff();

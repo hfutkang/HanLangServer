@@ -51,6 +51,7 @@ public class GlassesService extends Service {
 	public final static int WIFI_CONNECTED = 15;
 	public final static int GET_UP_TIME = 16;
 	public final static int GET_GLASS_INFO = 17;
+	public final static int TURN_WIFI_OFF = 18;
 	
 	private static final String CMD_CHANNEL_NAME = "cmdchannel";
 	private static final String NTF_CHANNEL_NAME = "ntfchannel";
@@ -244,6 +245,9 @@ public class GlassesService extends Service {
 					pk.putBoolean("round", getVideoRound());
 					pk.putInt("type", GET_GLASS_INFO);
 					break;
+				case TURN_WIFI_OFF:
+					mWifiAdmin.closeWifi();
+					break;
 				default:
 					return;
 			}
@@ -367,14 +371,6 @@ public class GlassesService extends Service {
 						mCmdChannel.sendPacket(pk);
 						Log.e(TAG, Utils.getLocalIpAddress());
 						unregisterReceiver(glassStateBroadcastReceiver);
-						Process process = Runtime.getRuntime().exec("ping -c 1 192.168.43.1");
-						InputStream in = process.getInputStream();
-						InputStreamReader inReader = new InputStreamReader(in);
-						BufferedReader bufferReader = new BufferedReader(inReader);
-						String line = "";
-						while ((line = bufferReader.readLine()) != null) {
-							Log.e(TAG, "ping:" + line);
-						}
 					} catch (Exception e) {
 						e.printStackTrace();
 						WifiManager mWifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
