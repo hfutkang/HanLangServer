@@ -35,6 +35,7 @@ import android.os.IBinder;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.hardware.usb.UsbManager;
 
 public class GlassesService extends Service {
 
@@ -52,6 +53,7 @@ public class GlassesService extends Service {
 	public final static int GET_UP_TIME = 16;
 	public final static int GET_GLASS_INFO = 17;
 	public final static int TURN_WIFI_OFF = 18;
+	public final static int GET_STATE = 19;
 	
 	private static final String CMD_CHANNEL_NAME = "cmdchannel";
 	private static final String NTF_CHANNEL_NAME = "ntfchannel";
@@ -105,6 +107,7 @@ public class GlassesService extends Service {
 		filter.addAction("cn.ingenic.glass.ACTION_MEDIA_VIDEO_START");
 		filter.addAction("cn.ingenic.glass.ACTION_MEDIA_VIDEO_FINISH");
 		filter.addAction(Intent.ACTION_BOOT_COMPLETED);
+		filter.addAction(UsbManager.ACTION_USB_STATE);
 		filter.addAction(Intent.ACTION_POWER_CONNECTED);
 		filter.addAction(Intent.ACTION_POWER_DISCONNECTED);
 		mGlassNotifyBroadcastReceiver = new GlassReceiver(this, mNotifyChannel);
@@ -248,6 +251,10 @@ public class GlassesService extends Service {
 				case TURN_WIFI_OFF:
 					mWifiAdmin.closeWifi();
 					break;
+				case GET_STATE:
+					pk.putInt("state", getState());
+					pk.putInt("type", GET_STATE);
+					break;
 				default:
 					return;
 			}
@@ -333,6 +340,16 @@ public class GlassesService extends Service {
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 		return preferences.getString("duration", "10");
 	}
+	
+	private int getState() {
+		long startTime = mGlassNotifyBroadcastReceiver.getVideoRecorderStartTime();
+		
+		if(startTime == 0)
+			return 0;
+		else
+			return (int)(System.currentTimeMillis() - startTime);
+	}
+	
 	private boolean isWifiConnected(String ssid) {
 		
 		NetworkInfo netinfo = mConnectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
