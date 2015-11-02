@@ -11,6 +11,7 @@ LOCAL_STATIC_JAVA_LIBRARIES :=  \
 	android-support-v7-appcompat \
 	android-support-v4 \
 	IngenicGlassSDK \
+	fota_iport	\
 	VoiceRecognizerAPI
 
 LOCAL_JNI_SHARED_LIBRARIES := libSmartGlassesLedTest
@@ -32,7 +33,7 @@ LOCAL_PACKAGE_NAME := HanLangServer
 include $(BUILD_PACKAGE)
 
 include $(CLEAR_VARS)
-LOCAL_PREBUILT_STATIC_JAVA_LIBRARIES += IngenicGlassSDK:libs/IngenicGlassSDK.jar
+LOCAL_PREBUILT_STATIC_JAVA_LIBRARIES += IngenicGlassSDK:libs/IngenicGlassSDK.jar fota__iport:libs/iport.jar
 LOCAL_CERTIFICATE := platform  
 include $(BUILD_MULTI_PREBUILT)  
 
