@@ -9,6 +9,7 @@ import com.ingenic.glass.api.sync.SyncChannel;
 import com.ingenic.glass.api.sync.SyncChannel.Packet;
 import com.smartglass.smartglassesledtest.LedOperation;
 import com.ingenic.glass.voicerecognizer.api.VoiceRecognizer;
+import com.ingenic.glass.voicerecognizer.api.VoiceRecognizerListener;
 
 import android.hardware.usb.UsbManager;
 import android.content.BroadcastReceiver;
@@ -21,6 +22,8 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.os.RecoverySystem;
+import android.os.PowerManager;
+import android.os.PowerManager.WakeLock;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -43,11 +46,12 @@ public class GlassReceiver extends BroadcastReceiver {
 	
 	private final static String LOW_STORAGE_ACTION = "ACTION_LOW_STORAGE";
 	
+        private WakeLock mWakeLock;
 	public GlassReceiver(Context context, SyncChannel channle) {
 		mChannel = channle;
 		mContext = context;
 		mLedOperation = new LedOperation();
-		mVoiceRecognizer = new VoiceRecognizer(VoiceRecognizer.REC_TYPE_COMMAND, null);
+		mVoiceRecognizer = new VoiceRecognizer(VoiceRecognizer.REC_TYPE_COMMAND, new VoiceRecognizerListener());
 		mVoiceRecognizer.setAppName("GlassReceiver");
 	}
 
@@ -62,10 +66,6 @@ public class GlassReceiver extends BroadcastReceiver {
 			mLedOperation.TurnRedLightBlinkOn();
 			sendLowPowerMsg();
 			mVoiceRecognizer.playTTS(mContext.getString(R.string.tts_low_battery));
-	        }else if (intent.getAction().equals(UsbManager.ACTION_USB_STATE)) {
-	                boolean connected = intent.getBooleanExtra(UsbManager.USB_CONNECTED, false);    
-			Log.d(TAG, "connected = "+connected);
-			mPowerConnected = connected;
 	        }else if(intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)) {
 			int status = intent.getIntExtra("status",BatteryManager.BATTERY_STATUS_UNKNOWN);
 			int chargePlug = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1);
@@ -73,7 +73,17 @@ public class GlassReceiver extends BroadcastReceiver {
 			int level = intent.getIntExtra("level", 0);
 			int scale = intent.getIntExtra("scale", 100);
 			currentPowerPercentage = level*100/scale;
-			
+
+			Log.d(TAG,"chargePlug="+getPlugType(chargePlug));
+			  /*add this just for can get power states after boot completed*/
+			if(chargePlug == BatteryManager.BATTERY_PLUGGED_AC 
+			   || chargePlug == BatteryManager.BATTERY_PLUGGED_USB
+			   || chargePlug == BatteryManager.BATTERY_PLUGGED_WIRELESS){
+			    mPowerConnected = true;
+			}else{
+			    mPowerConnected = false;
+			}
+			    
 			if (status == BatteryManager.BATTERY_STATUS_FULL && mPowerConnected) {
 			    mLedOperation.TurnRedLightOff();
 			    if(mVideoRecording){
@@ -86,6 +96,12 @@ public class GlassReceiver extends BroadcastReceiver {
 				Log.d(TAG,"set mBatteryFull false");
 			    mBatteryFull = false;
 			    mLedOperation.TurnRedLightOn();
+			    if(mWakeLock == null){
+				Log.d(TAG,"acquere wakelock");
+				PowerManager pm = (PowerManager)mContext.getSystemService(Context.POWER_SERVICE);
+				mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, context.getClass().getName());
+				mWakeLock.acquire();
+			    }
 			}
 		}
 		else if(intent.getAction().equals(Intent.ACTION_BOOT_COMPLETED)) {
@@ -114,6 +130,12 @@ public class GlassReceiver extends BroadcastReceiver {
 			mLedOperation.TurnRedLightBlinkOff();
 			mLedOperation.TurnRedLightOn();
 			mPowerConnected = true;
+			if(mWakeLock == null){
+			    Log.d(TAG,"acquere wakelock");
+			    PowerManager pm = (PowerManager)mContext.getSystemService(Context.POWER_SERVICE);
+			    mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, context.getClass().getName());
+			    mWakeLock.acquire();
+			}
 
 		}else if(intent.getAction().endsWith(Intent.ACTION_POWER_DISCONNECTED)) {
 			mLedOperation.TurnRedLightOff();
@@ -122,6 +144,10 @@ public class GlassReceiver extends BroadcastReceiver {
 				mLedOperation.TurnGreenLightOff();
 			
 			mPowerConnected = false;
+			if(mWakeLock != null) {
+			    mWakeLock.release();
+			    mWakeLock = null;
+			}
 		}
 		else if("INSTALL_UPDATE_PACKAGE".equals(action)) {
 			String path = intent.getStringExtra("PackageFileName");
@@ -242,5 +268,19 @@ public class GlassReceiver extends BroadcastReceiver {
 		Editor editor = preference.edit();
 		editor.putInt("last_update_state", newState);
 		editor.commit();
-}
+	}
+    
+    private String getPlugType(int chargePlug){
+	switch (chargePlug){
+	    case BatteryManager.BATTERY_PLUGGED_AC:
+		return "ac";
+	    case BatteryManager.BATTERY_PLUGGED_USB:
+		return "usb";
+	    case BatteryManager.BATTERY_PLUGGED_WIRELESS:
+		return "wireless";
+	    default:
+		return "no";
+	    }
+    }
+  
 }

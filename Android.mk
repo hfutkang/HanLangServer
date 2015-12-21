@@ -33,7 +33,7 @@ LOCAL_PACKAGE_NAME := HanLangServer
 include $(BUILD_PACKAGE)
 
 include $(CLEAR_VARS)
-LOCAL_PREBUILT_STATIC_JAVA_LIBRARIES += IngenicGlassSDK:libs/IngenicGlassSDK.jar fota__iport:libs/iport.jar
+LOCAL_PREBUILT_STATIC_JAVA_LIBRARIES += IngenicGlassSDK:libs/IngenicGlassSDK.jar fota_iport:libs/iport.jar
 LOCAL_CERTIFICATE := platform  
 include $(BUILD_MULTI_PREBUILT)  
 

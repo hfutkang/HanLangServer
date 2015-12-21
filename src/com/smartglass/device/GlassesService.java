@@ -73,6 +73,7 @@ public class GlassesService extends Service {
 	public final static int FACTORY_RESET = 22;
 	
 	public final static int CONNECT_WIFI_TIMEOUT = 1;
+	public final static int REQUEST_SHUTDOWN = 2;
 	
 	public final static int UPDATE_DEFAULT_STATE = -1;
 	public final static int UPDATE_TRY_CONNECT_WIFI = 0;
@@ -288,6 +289,7 @@ public class GlassesService extends Service {
 					pk.putString("oem", gf.oem);
 					pk.putString("platform", gf.platform);
 					pk.putString("deviceType", gf.deviceType);
+					pk.putString("token", gf.token);
 					pk.putInt("type", GET_GLASS_INFO);
 					break;
 				case TURN_WIFI_OFF:
@@ -307,14 +309,17 @@ public class GlassesService extends Service {
 					mUpdateInfo.md5sum = data.getString("md5");
 					mUpdateInfo.deltaid = data.getString("deltaid");
 					mUpdateInfo.versionName = data.getString("vname");
+					mUpdateInfo.ssid = data.getString("ssid");
+					mUpdateInfo.pw = data.getString("pw");
 					mUpdateInfo.update = true;
+					mUpdateInfo.firstConnect = true;
 					
-					Log.e(TAG, "deltaUrl:" + mUpdateInfo.deltaUrl + " fileSize:" + mUpdateInfo.fileSize + " md5sum:" + mUpdateInfo.md5sum
+					if(GlassApplication.DEBUG) Log.e(TAG, "deltaUrl:" + mUpdateInfo.deltaUrl + " fileSize:" + mUpdateInfo.fileSize + " md5sum:" + mUpdateInfo.md5sum
 							+ " deltaid:" + mUpdateInfo.deltaid + " versionName:" + mUpdateInfo.versionName);
 					saveNewVersionName(mUpdateInfo.versionName);
 					
-					Log.e(TAG, "ssid:" + data.getString("ssid") + " pw:" + data.getString("pw"));
-					mWifiAdmin.connect(data.getString("ssid"), data.getString("pw"), WifiCipherType.WIFICIPHER_WPA);
+					if(GlassApplication.DEBUG) Log.e(TAG, "ssid:" + data.getString("ssid") + " pw:" + data.getString("pw"));
+					mWifiAdmin.connect(mUpdateInfo.ssid, mUpdateInfo.pw, WifiCipherType.WIFICIPHER_WPA);
 					IntentFilter filter = new IntentFilter(WifiManager.NETWORK_STATE_CHANGED_ACTION);
 					registerReceiver(glassStateBroadcastReceiver, filter);
 					
@@ -323,7 +328,7 @@ public class GlassesService extends Service {
 					mHandler.sendEmptyMessageDelayed(UPDATE_CONNECTI_WIFI_TIMEOUT, 10000);
 					return;
 				case FACTORY_RESET:
-					sendBroadcast(new Intent("android.intent.action.MASTER_CLEAR"));
+					clearDataAndReboot();
 					break;
 				default:
 					return;
@@ -464,7 +469,7 @@ public class GlassesService extends Service {
 						else {
 							startDownLoadUpdatePacket();
 						}
-						Log.e(TAG, Utils.getLocalIpAddress());
+						  //Log.e(TAG, Utils.getLocalIpAddress());
 						unregisterReceiver(glassStateBroadcastReceiver);
 						mHandler.removeMessages(UPDATE_CONNECTI_WIFI_TIMEOUT);
 					} catch (Exception e) {
@@ -482,11 +487,24 @@ public class GlassesService extends Service {
 		public void handleMessage(Message msg) {
 			// TODO Auto-generated method stub
 			super.handleMessage(msg);
-			if(msg.what == CONNECT_WIFI_TIMEOUT) {
+			if(msg.what == UPDATE_CONNECTI_WIFI_TIMEOUT) {
+				if(!mUpdateInfo.firstConnect) {
+					
 				unregisterReceiver(glassStateBroadcastReceiver);
-				
 				reportUpdateState(UPDATE_CONNECTI_WIFI_TIMEOUT);
 				
+				}else {
+					mUpdateInfo.firstConnect = false;
+					mWifiAdmin.connect(mUpdateInfo.ssid, mUpdateInfo.pw, WifiCipherType.WIFICIPHER_WPA);
+					mHandler.sendEmptyMessageDelayed(UPDATE_CONNECTI_WIFI_TIMEOUT, 10000);
+				}
+				
+			}
+			if(msg.what == REQUEST_SHUTDOWN) {
+				Intent i = new Intent("android.intent.action.ACTION_REQUEST_SHUTDOWN");
+				i.putExtra("android.intent.extra.KEY_CONFIRM", false);
+				i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+				startActivity(i);
 			}
 		}
 	};
@@ -507,6 +525,7 @@ public class GlassesService extends Service {
 			gf.oem = (String)method.invoke(object, new Object[]{"ro.fota.oem"});
 			gf.platform = (String)method.invoke(object, new Object[]{"ro.fota.platform"});
 			gf.models = (String)method.invoke(object, new Object[]{"ro.fota.device"});
+			gf.token = (String)method.invoke(object, new Object[]{"ro.fota.token"});
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -529,7 +548,10 @@ public class GlassesService extends Service {
 	
 	private class updateInfo {
 		boolean update;
+		boolean firstConnect;
 		int fileSize;
+		String ssid;
+		String pw;
 		String deltaUrl;
 		String md5sum;
 		String deltaid;
@@ -629,10 +651,47 @@ public class GlassesService extends Service {
 		
 		File file = Environment.getExternalStorageDirectory();
 		StatFs sf = new StatFs(file.getAbsolutePath());
+		
 		int storageLeft = sf.getAvailableBlocks()*sf.getBlockSize() - fileSize;
+		Log.e(TAG, "blocks:" + sf.getAvailableBlocks() + " blocksize:" + sf.getBlockSize() + " fileSize:" + fileSize);
 		if(storageLeft > 50000000)
-			return true;
-		return false;
+			return false;
+		return true;
+	}
+	
+	private void clearDataAndReboot() {
+		try {
+			File file = Environment.getExternalStorageDirectory();
+			deletDir(file);
+			
+			File thumbdir = new File("/data/apache/GlassData/.videothumbnails");
+			deletDir(thumbdir);
+			
+			sendBroadcast(new Intent("cn.ingenic.glasssync.CANCEL_BOND"));
+			
+			mHandler.sendEmptyMessageDelayed(REQUEST_SHUTDOWN, 2000);
+			
+			}catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private void deletDir(File dir)	{
+		if(dir == null || !dir.exists() || dir.isFile())
+			return;
+		for (File f : dir.listFiles()) {
+			Log.e(TAG, f.getAbsolutePath());
+			if(f == null)
+				return;
+			
+			if(f.isFile()) {
+				f.delete();
+			}
+			else if(f.isDirectory()) {
+				deletDir(f);
+			}
+		}
+		dir.delete();	
 	}
 
 }

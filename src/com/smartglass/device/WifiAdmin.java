@@ -3,23 +3,27 @@ package com.smartglass.device;
 import java.net.Inet4Address;
 import java.util.List;
 
+import android.content.Intent;
 import android.content.Context;
+import android.content.IntentFilter;
+import android.content.BroadcastReceiver;
+import android.net.NetworkInfo;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.util.Log;
-
+import android.os.Handler;
 /////import com.listong.util.WifiConnectaaaa.WifiCipherType;
 
 public class WifiAdmin {
 	
-	private final static String TAG = "WifiAdmin";
+	private final static String TAG = "WifiAdmin-A";
 
 	private WifiManager mWifiManager;
 	
-
+	private Context mContext;
 	private WifiInfo mWifiInfo;
 
 	private List<ScanResult> mWifiList;
@@ -28,9 +32,14 @@ public class WifiAdmin {
 	WifiLock mWifiLock;
 
 	public WifiAdmin(Context context) {
-	
+		mContext = context;	
 		mWifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
 		mWifiInfo = mWifiManager.getConnectionInfo();
+		IntentFilter filter = new IntentFilter();
+		filter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
+		filter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
+
+		mContext.registerReceiver(mReceiver, filter);
 	}
 	
 	public enum WifiCipherType {
@@ -39,6 +48,7 @@ public class WifiAdmin {
 
 
 	public boolean closeWifi() {
+	    Log.d(TAG, "closeWifi");
 		if (mWifiManager.isWifiEnabled()) {
 			return mWifiManager.setWifiEnabled(false);
 		}
@@ -163,16 +173,26 @@ public class WifiAdmin {
 	public boolean openWifi() {
 		boolean bRet = true;
 		if (!mWifiManager.isWifiEnabled()) {
+		    Log.d(TAG, "open wifi");
 			bRet = mWifiManager.setWifiEnabled(true);
 		}
+		closeWifiAp();
 		return bRet;
 	}
 
+    public void closeWifiAp() {
+		if (mWifiManager.getWifiApState() == WifiManager.WIFI_AP_STATE_ENABLED
+				|| mWifiManager.getWifiApState() == WifiManager.WIFI_AP_STATE_ENABLING) {
+			mWifiManager.setWifiApEnabled(null, false);
+		}
+	}
+
 	public boolean connect(String SSID, String Password, WifiCipherType Type) {
+		Log.d(TAG, "connect in");
 		if (!this.openWifi()) {
 			return false;
 		}
-		Log.e(TAG, "wifi state:" + mWifiManager.getWifiState());
+		Log.d(TAG, "wifi state:" + mWifiManager.getWifiState());
 		while (mWifiManager.getWifiState() == WifiManager.WIFI_STATE_ENABLING) {
 			try {
 				
@@ -362,6 +382,7 @@ public class WifiAdmin {
 	}
 	
 	public boolean connectSpecificAP(ScanResult scan) {
+	    Log.d(TAG, "connectSpecificAP in");
 		List<WifiConfiguration> list = mWifiManager.getConfiguredNetworks();
 		boolean networkInSupplicant = false;
 		boolean connectResult = false;
@@ -428,5 +449,46 @@ public class WifiAdmin {
 
 		return config;
 	}
+
+    private final int TIMEOUT_MS = 60000*3;//3min
+    private final int MSG_CONNECT_TIMEOUT = 0;
+
+    private Handler mHandler = new Handler() {
+	    public void handleMessage(android.os.Message msg) {
+		if (msg.what == MSG_CONNECT_TIMEOUT) {
+		    Log.e(TAG,"wifi is last a long time. so close wifi");
+		    closeWifi();
+		}
+	    };
+	};
+    private BroadcastReceiver mReceiver = new BroadcastReceiver() {
+		
+	    @Override
+		public void onReceive(Context context, Intent intent) {
+		  // TODO Auto-generated method stub
+		String action = intent.getAction();
+		Log.e(TAG, action);
+		if(WifiManager.NETWORK_STATE_CHANGED_ACTION.equals(action)) {
+		    NetworkInfo ni = (NetworkInfo) intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
+		      //WifiInfo wi = (WifiInfo)intent.getParcelableExtra(WifiManager.EXTRA_WIFI_INFO);
+		    Log.d(TAG, "ni.isConnected():" + ni.isConnected() + " "+ ni + " "
+			  + mWifiManager.getConnectionInfo().getSSID());
+		    if(!ni.isConnected()) {
+			mHandler.sendEmptyMessageDelayed(MSG_CONNECT_TIMEOUT,TIMEOUT_MS);
+		    }else{
+			mHandler.removeMessages(MSG_CONNECT_TIMEOUT);
+		    }
+		}else if(WifiManager.WIFI_STATE_CHANGED_ACTION.equals(action)){
+		    int state = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE,
+						   WifiManager.WIFI_STATE_UNKNOWN);
+		    Log.d(TAG,"-wifi state change to:"+state);
+		    if(state == WifiManager.WIFI_STATE_ENABLED){
+			mHandler.sendEmptyMessageDelayed(MSG_CONNECT_TIMEOUT,TIMEOUT_MS);
+		    }else if(state == WifiManager.WIFI_STATE_DISABLED){
+			mHandler.removeMessages(MSG_CONNECT_TIMEOUT);
+		    }
+		}
+	    }
+	};
 
 }
